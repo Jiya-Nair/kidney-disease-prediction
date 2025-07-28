@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,6 +21,11 @@ print(df.info())
 print("\nMissing values in each column:")
 print(df.isnull().sum())
 
+df.columns= df.columns.str.lower().str.replace('','_')
+df.replace('?',pd.NA, inplace=True)
+df=df.apply(pd.to_numeric,errors='ignore')
+df.dropna(inplace=True)
+                                            
 
 
 
