@@ -25,7 +25,72 @@ df.columns= df.columns.str.lower().str.replace('','_')
 df.replace('?',pd.NA, inplace=True)
 df=df.apply(pd.to_numeric,errors='ignore')
 df.dropna(inplace=True)
-                                            
+ 
+# Milestone 3: Exploratory Data Analysis
+print("\n--- Dataset Shape:", df.shape)
+print("\n--- First 5 Rows:\n", df.head())
+print("\n--- Dataset Info:\n")
+df.info()
+print("\n--- Summary Statistics:\n", df.describe())
+
+plt.figure(figsize=(6, 4))
+sns.histplot(df['age'], kde=True, bins=20)
+plt.title('Age Distribution')
+plt.xlabel('Age')
+plt.ylabel('Frequency')
+plt.show()
+
+plt.figure(figsize=(4, 3))
+sns.countplot(x='classification', data=df)
+plt.title('Target Variable Distribution')
+plt.xlabel('Classification')
+plt.ylabel('Count')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.scatterplot(x='age', y='bp', hue='classification', data=df)
+plt.title('Age vs Blood Pressure')
+plt.xlabel('Age')
+plt.ylabel('Blood Pressure')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.boxplot(x='classification', y='sc', data=df)
+plt.title('Serum Creatinine by Classification')
+plt.xlabel('Classification')
+plt.ylabel('Serum Creatinine')
+plt.show()
+
+# 4. Multivariate Analysis – Correlation
+plt.figure(figsize=(12, 8))
+numerical_cols = df.select_dtypes(include=['float64', 'int64'])
+correlation_matrix = numerical_cols.corr()
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Matrix')
+plt.show()
+
+# 5. Data Preparation
+# Drop rows with missing values (can be handled better if required)
+df = df.dropna()
+
+# Separate features and label
+X = df.drop(columns=['classification'])
+y = df['classification']
+
+# Convert categorical to numeric if needed
+X = pd.get_dummies(X)
+
+# Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 6. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+print("\n✅ Data ready for Model Building!")
+print("Training shape:", X_train.shape)
+print("Testing shape:", X_test.shape)
+                                           
 
 
 
