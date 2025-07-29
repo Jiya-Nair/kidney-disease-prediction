@@ -91,6 +91,50 @@ print("\n✅ Data ready for Model Building!")
 print("Training shape:", X_train.shape)
 print("Testing shape:", X_test.shape)
                                            
+# 2. Bivariate Analysis
+plt.figure(figsize=(6, 4))
+sns.scatterplot(x='age', y='bp', data=df)
+plt.title('Age vs Blood Pressure')
+plt.xlabel('Age')
+plt.ylabel('Blood Pressure')
+plt.show()
+
+plt.figure(figsize=(6, 4))
+sns.boxplot(x='classification', y='bgr', data=df)
+plt.title('Blood Glucose vs Classification')
+plt.xlabel('CKD Status')
+plt.ylabel('Blood Glucose Random')
+plt.show()
+
+# 3. Multivariate Analysis - Correlation
+plt.figure(figsize=(10, 8))
+correlation_matrix = df.corr()
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Matrix')
+plt.show()
+
+# 4. Feature Scaling and Data Splitting
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Separate features and target
+X = df.drop('classification', axis=1)
+y = df['classification']
+
+# Handle categorical if needed (optional, based on your dataset)
+# X = pd.get_dummies(X)
+
+# Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+print("\nX_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
 
 
 
