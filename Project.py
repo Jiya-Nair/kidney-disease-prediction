@@ -144,6 +144,170 @@ print("\nX_train shape:", X_train.shape)
 print("X_test shape:", X_test.shape)
 print("y_train shape:", y_train.shape)
 print("y_test shape:", y_test.shape)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# Load Data
+df = pd.read_csv("kidney_disease.csv")
+
+# Clean Column Names
+df.columns = df.columns.str.lower().str.replace(" ", "_")
+
+# Drop duplicate or irrelevant columns if any
+df = df.drop(columns=["id"], errors="ignore")  # Drop 'id' if present
+
+# Handle Missing Values
+df = df.dropna(axis=0)  # or use fillna if too much data is lost
+
+# Encode Object Columns
+for col in df.select_dtypes(include=['object']).columns:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col])
+
+# Correlation Heatmap (Optional Visual Analysis)
+plt.figure(figsize=(12, 8))
+sns.heatmap(df.corr(), annot=True, fmt='.2f', cmap='coolwarm')
+plt.title('Correlation Matrix')
+plt.show()
+
+# Separate Features and Target
+X = df.drop('classification', axis=1)
+y = df['classification']
+
+# Split Dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# --------------------
+# 1. Logistic Regression
+lr_model = LogisticRegression(max_iter=1000)
+lr_model.fit(X_train_scaled, y_train)
+y_pred_lr = lr_model.predict(X_test_scaled)
+print("Logistic Regression Accuracy:", accuracy_score(y_test, y_pred_lr))
+
+# --------------------
+# 2. Decision Tree
+dt_model = DecisionTreeClassifier()
+dt_model.fit(X_train, y_train)
+y_pred_dt = dt_model.predict(X_test)
+print("Decision Tree Accuracy:", accuracy_score(y_test, y_pred_dt))
+
+# --------------------
+# 3. Random Forest
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
+y_pred_rf = rf_model.predict(X_test)
+print("Random Forest Accuracy:", accuracy_score(y_test, y_pred_rf))
+
+# --------------------
+# 4. Artificial Neural Network (ANN)
+ann_model = Sequential()
+ann_model.add(Dense(64, input_dim=X_train_scaled.shape[1], activation='relu'))
+ann_model.add(Dense(32, activation='relu'))
+ann_model.add(Dense(1, activation='sigmoid'))  # Binary output
+
+ann_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+ann_model.fit(X_train_scaled, y_train, epochs=50, batch_size=8, verbose=0)
+
+loss, accuracy = ann_model.evaluate(X_test_scaled, y_test)
+print("ANN Accuracy:", accuracy)
+
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Function to plot confusion matrix
+def plot_conf_matrix(y_true, y_pred, title):
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Not CKD', 'CKD'], yticklabels=['Not CKD', 'CKD'])
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title(title)
+    plt.show()
+
+# --------------------------
+# 1. Logistic Regression
+print("=== Logistic Regression ===")
+print("Accuracy:", accuracy_score(y_test, y_pred_lr))
+print(classification_report(y_test, y_pred_lr))
+plot_conf_matrix(y_test, y_pred_lr, "Logistic Regression")
+
+# --------------------------
+# 2. Decision Tree
+print("\n=== Decision Tree ===")
+print("Accuracy:", accuracy_score(y_test, y_pred_dt))
+print(classification_report(y_test, y_pred_dt))
+plot_conf_matrix(y_test, y_pred_dt, "Decision Tree")
+
+# --------------------------
+# 3. Random Forest
+print("\n=== Random Forest ===")
+print("Accuracy:", accuracy_score(y_test, y_pred_rf))
+print(classification_report(y_test, y_pred_rf))
+plot_conf_matrix(y_test, y_pred_rf, "Random Forest")
+
+# --------------------------
+# 4. ANN
+y_pred_ann = (ann_model.predict(X_test_scaled) > 0.5).astype("int32")
+
+print("\n=== ANN (Artificial Neural Network) ===")
+print("Accuracy:", accuracy_score(y_test, y_pred_ann))
+print(classification_report(y_test, y_pred_ann))
+plot_conf_matrix(y_test, y_pred_ann, "ANN")
+
+import pickle
+from sklearn.preprocessing import StandardScaler
+
+# Assume `model` is your trained best model
+# Assume `scaler` is the StandardScaler used before training
+
+# Save model
+with open('best_ckd_model.pkl', 'wb') as f:
+    pickle.dump(model, f)
+
+# Save scaler
+with open('scaler.pkl', 'wb') as f:
+    pickle.dump(scaler, f)
+from flask import Flask, request, render_template
+import pickle
+import numpy as np
+
+# Load saved model and scaler
+model = pickle.load(open('best_ckd_model.pkl', 'rb'))
+scaler = pickle.load(open('scaler.pkl', 'rb'))
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        # Get input features from form
+        features = [float(x) for x in request.form.values()]
+        input_scaled = scaler.transform([features])
+        prediction = model.predict(input_scaled)
+        result = "CKD Detected" if prediction[0] == 1 else "No CKD"
+        return render_template('index.html', prediction_text=f"Result: {result}")
+    except Exception as e:
+        return render_template('index.html', prediction_text=f"Error: {str(e)}")
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 
