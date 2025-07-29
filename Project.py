@@ -5,16 +5,25 @@ import seaborn as sns
 import kagglehub
 import os
 
-# Download latest version
-path = kagglehub.dataset_download("mansoordaku/ckdisease")
+# Correct zip file path
+zip_path = "/content/archive (2).zip"
 
-print("Path to dataset files:", path)
-csv_file= os.path.join(path,"chronic_kidney_disease.csv")
-df= pd.read_csv(csv_file)
+# Unzip it
+if os.path.exists(zip_path):
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall("/content/")
+    print("✅ ZIP extracted successfully!")
 
-print("First five rows of the dataset:")
-print(df.head())
+    print("📁 Files inside /content/ now:")
+    print(os.listdir("/content/"))
+else:
+    print("❌ File not found. Check the file name again.")
 
+# Replace the file name below if it's different
+df = pd.read_csv("/content/kidney_disease.csv")
+
+# Show first 5 rows to confirm it worked
+df.head()
 print("\n dataset info:")
 print(df.info())
 
@@ -34,28 +43,28 @@ df.info()
 print("\n--- Summary Statistics:\n", df.describe())
 
 plt.figure(figsize=(6, 4))
-sns.histplot(df['age'], kde=True, bins=20)
+sns.histplot(df['_a_g_e_'], kde=True, bins=20)
 plt.title('Age Distribution')
 plt.xlabel('Age')
 plt.ylabel('Frequency')
 plt.show()
 
 plt.figure(figsize=(4, 3))
-sns.countplot(x='classification', data=df)
+sns.countplot(x='_c_l_a_s_s_i_f_i_c_a_t_i_o_n_', data=df)
 plt.title('Target Variable Distribution')
 plt.xlabel('Classification')
 plt.ylabel('Count')
 plt.show()
 
 plt.figure(figsize=(6, 4))
-sns.scatterplot(x='age', y='bp', hue='classification', data=df)
+sns.scatterplot(x='_a_g_e_', y='_b_p_', hue='_c_l_a_s_s_i_f_i_c_a_t_i_o_n_', data=df)
 plt.title('Age vs Blood Pressure')
 plt.xlabel('Age')
 plt.ylabel('Blood Pressure')
 plt.show()
 
 plt.figure(figsize=(6, 4))
-sns.boxplot(x='classification', y='sc', data=df)
+sns.boxplot(x='_c_l_a_s_s_i_f_i_c_a_t_i_o_n_', y='_s_c_', data=df)
 plt.title('Serum Creatinine by Classification')
 plt.xlabel('Classification')
 plt.ylabel('Serum Creatinine')
