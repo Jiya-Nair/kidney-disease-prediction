@@ -117,21 +117,23 @@ plt.show()
 
 # 3. Multivariate Analysis - Correlation
 plt.figure(figsize=(10, 8))
-correlation_matrix = df.corr()
+correlation_matrix = df.select_dtypes(include=['float64','int64']).corr()
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
 plt.title('Correlation Matrix')
 plt.show()
 
 # 4. Feature Scaling and Data Splitting
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # Separate features and target
-X = df.drop('classification', axis=1)
-y = df['classification']
+X = df.drop('_c_l_a_s_s_i_f_i_c_a_t_i_o_n_', axis=1)
+y = df['_c_l_a_s_s_i_f_i_c_a_t_i_o_n_']
 
-# Handle categorical if needed (optional, based on your dataset)
-# X = pd.get_dummies(X)
+# Convert categorical columns to numeric (Label Encoding)
+le = LabelEncoder()
+for col in X.select_dtypes(include=['object']):
+    X[col] = le.fit_transform(X[col])
 
 # Scaling
 scaler = StandardScaler()
@@ -152,9 +154,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load Data
-df = pd.read_csv("kidney_disease.csv")
+df = pd.read_csv("/archive (2).zip")
 
 # Clean Column Names
 df.columns = df.columns.str.lower().str.replace(" ", "_")
@@ -163,15 +167,18 @@ df.columns = df.columns.str.lower().str.replace(" ", "_")
 df = df.drop(columns=["id"], errors="ignore")  # Drop 'id' if present
 
 # Handle Missing Values
-df = df.dropna(axis=0)  # or use fillna if too much data is lost
+df.replace("?", pd.NA, inplace=True)
+df.dropna(inplace=True)
+
 
 # Encode Object Columns
-for col in df.select_dtypes(include=['object']).columns:
-    le = LabelEncoder()
+le = LabelEncoder()
+for col in df.select_dtypes(include=['object']):
     df[col] = le.fit_transform(df[col])
 
 # Correlation Heatmap (Optional Visual Analysis)
 plt.figure(figsize=(12, 8))
+correlation_matrix = df.select_dtypes(include=['float64','int64']).corr()
 sns.heatmap(df.corr(), annot=True, fmt='.2f', cmap='coolwarm')
 plt.title('Correlation Matrix')
 plt.show()
@@ -179,6 +186,7 @@ plt.show()
 # Separate Features and Target
 X = df.drop('classification', axis=1)
 y = df['classification']
+
 
 # Split Dataset
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -274,6 +282,7 @@ from sklearn.preprocessing import StandardScaler
 # Assume `scaler` is the StandardScaler used before training
 
 # Save model
+model = LogisticRegression
 with open('best_ckd_model.pkl', 'wb') as f:
     pickle.dump(model, f)
 
@@ -308,6 +317,11 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+import joblib
+best_model = model
+joblib.dump(best_model,'model.pkl')
+print("Model saved successfully!")
 
 
 
