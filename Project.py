@@ -318,10 +318,36 @@ def predict():
 if __name__ == '__main__':
     app.run(debug=True)
 
+# 1. Import Libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 import joblib
-best_model = model
-joblib.dump(best_model,'model.pkl')
-print("Model saved successfully!")
+
+# 2. Load Dataset
+df = pd.read_csv("/content/archive (2).zip")  # replace with your actual filename
+
+# 3. Preprocess Data (this is basic - modify if needed)
+df = df.dropna()  # or use fillna
+
+# 4. Select Features and Target
+X = df[['age', 'bp', 'sg', 'hemo','al']]  # use your important features only
+y = df['classification']  # or 'ckd' or whatever your target column is
+
+# 5. Train/Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 6. Train Model
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# 7. Evaluate Model
+y_pred = model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))  # ✅ You should see this output
+
+# 8. Save Model
+joblib.dump(model, 'ckd_model.pkl')  # ✅ Use this file in your Flask app
 
 
 
